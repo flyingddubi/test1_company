@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 
 const scrollToTop = () => {
-  alert("함수실행완료");
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
@@ -26,7 +25,7 @@ const Footer = () => {
                 <Link
                   to="/"
                   onClick={scrollToTop}
-                  lassName="hover:text-white transition-colors"
+                  className="hover:text-white transition-colors"
                 >
                   홈
                 </Link>
