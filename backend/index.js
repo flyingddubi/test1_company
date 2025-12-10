@@ -4,6 +4,14 @@ const mysql = require("mysql2/promise");
 const app = express();
 const port = 3000;
 
+const userRoutes = require("./routes/user");
+
+app.use(express.json());
+app.use(express.urlencoded());
+
+app.use("/api/auth", userRoutes);
+
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
