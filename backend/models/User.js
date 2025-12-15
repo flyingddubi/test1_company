@@ -30,6 +30,26 @@ class User {
     return result.insertId;
   }
 
+  // ID로 사용자 찾기
+  static async findById(db, userId) {
+    const [rows] = await db.execute(
+      "SELECT * FROM users WHERE id = ?",
+      [userId]
+    );
+    return rows[0] || null;
+  }
+
+  // ID로 사용자 삭제
+  static async deleteById(db, userId) {
+    const [result] = await db.execute(
+      "DELETE FROM users WHERE id = ?",
+      [userId]
+    );
+    return {
+      affectedRows: result.affectedRows,  // 삭제된 행의 수 (보통 1 또는 0)
+    };
+  }
+
   // 사용자 정보 업데이트
   static async update(db, userId, updateData) {
     const {

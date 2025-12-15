@@ -94,9 +94,10 @@ router.post("/login", async (req, res) => {
         await User.update(db, user.id, updateData);
         return res
           .status(401)
-          .json({ message: "사용자 이름 또는 비밀번호가 올바르지 않습니다.",
+          .json({
+            message: "사용자 이름 또는 비밀번호가 올바르지 않습니다.",
             remainingAttempts: 5 - newFailedAttempts,
-           });
+          });
       }
     }
 
@@ -130,17 +131,87 @@ router.post("/login", async (req, res) => {
       { expiresIn: "24h" }
     );
 
-    console.log("token: " + token);
+    console.log(token);
 
-    // password 제외한 사용자 정보 반환
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    // password 제외한 사용자 정보 반환 (업데이트된 정보 포함)
     const { password: _, ...userWithoutPassword } = user;
     res.json({
-      message: "로그인 성공",
       user: { ...userWithoutPassword, isLoggedIn: true, ipAddress: ipAddress },
     });
   } catch (error) {
-
+    console.log("서버 오류: " + error.message);
+    res.status(500).json({ messgae: "서버 오류가 발생했습니다." });
   }
 });
 
+router.post("/logout", async (req, res) => {
+  try {
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(400).json({ message: "이미 로그아웃된 상태입니다." });
+    }
+
+    // 데이터베이스 연결 가져오기
+    const db = req.app.locals.db;
+    if (!db) {
+      return res.status(500).json({ message: "데이터베이스 연결이 없습니다." });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(db, decoded.userId);
+
+      if (user) {
+        // 로그아웃 시 isLoggedIn을 false로 업데이트
+        await User.update(db, user.id, {
+          isLoggedIn: false,
+        });
+      }
+    } catch (error) {
+      console.log("토큰 검증 오류: " + error.message);
+      // 토큰이 유효하지 않아도 쿠키는 삭제
+    }
+
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    res.json({ message: "로그아웃되었습니다." });
+  } catch (error) {
+    console.log("로그아웃 오류: " + error.message);
+    res.status(500).json({ message: "서버 오류가 발생하였습니다." });
+  }
+});
+
+router.post("/delete/:userId", async (req, res) => {
+  try {
+    // 데이터베이스 연결 가져오기
+    const db = req.app.locals.db;
+    if (!db) {
+      return res.status(500).json({ message: "데이터베이스 연결이 없습니다." });
+    }
+
+    const userId = req.params.userId;
+    const result = await User.deleteById(db, userId);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+    }
+
+    res.json({ message: "사용자가 성공적으로 삭제되었습니다." });
+  } catch (error) {
+    console.log("사용자 삭제 오류: " + error.message);
+    res.status(500).json({ message: "서버 오류가 발생했습니다." });
+  }
+});
 module.exports = router;
