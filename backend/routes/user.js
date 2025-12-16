@@ -92,12 +92,10 @@ router.post("/login", async (req, res) => {
         });
       } else {
         await User.update(db, user.id, updateData);
-        return res
-          .status(401)
-          .json({
-            message: "사용자 이름 또는 비밀번호가 올바르지 않습니다.",
-            remainingAttempts: 5 - newFailedAttempts,
-          });
+        return res.status(401).json({
+          message: "사용자 이름 또는 비밀번호가 올바르지 않습니다.",
+          remainingAttempts: 5 - newFailedAttempts,
+        });
       }
     }
 
@@ -214,4 +212,24 @@ router.post("/delete/:userId", async (req, res) => {
     res.status(500).json({ message: "서버 오류가 발생했습니다." });
   }
 });
+
+router.post("/verify-token", (req, res) => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res
+      .status(400)
+      .json({ isValid: false, message: "토큰이 없습니다." });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return res.status(200).json({ isValid: true, user: decoded });
+  } catch (error) {
+    return res
+      .status(401)
+      .json({ isValid: false, message: "유효하지 않은 토큰입니다." });
+  }
+});
+
 module.exports = router;

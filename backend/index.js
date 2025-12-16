@@ -1,11 +1,17 @@
 require("dotenv").config();
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 const mysql = require("mysql2/promise");
 const app = express();
 const port = 3000;
 
 const userRoutes = require("./routes/user");
+
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}));
 
 app.use(express.json());
 app.use(express.urlencoded());
