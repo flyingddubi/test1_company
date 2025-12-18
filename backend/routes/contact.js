@@ -45,8 +45,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-//router.get("/", authenticateToken, async (req, res) => {
-router.get("/", async (req, res) => {
+router.get("/", authenticateToken, async (req, res) => {
+//router.get("/", async (req, res) => {
   // 데이터베이스 연결 가져오기
   const db = req.app.locals.db;
   if (!db) {
